@@ -8,7 +8,7 @@ import rateLimit from "express-rate-limit";
 import admin from "firebase-admin";
 import bodyParser from "body-parser";
 
-// ✅ Load environment variables from .env
+// ✅ Load environment variables from .env (if local)
 dotenv.config();
 
 const app = express();
@@ -30,20 +30,38 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// ✅ Initialize Firebase Admin
+// ✅ Initialize Firebase Admin safely
 try {
   const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-  console.log("✅ Firebase Admin initialized successfully");
+
+  // 🔧 Fix Render’s double-escaped \n issue in private key
+  if (serviceAccount.private_key) {
+    serviceAccount.private_key = serviceAccount.private_key
+      .replace(/\\n/gm, "\n")
+      .replace(/\r/gm, "");
+  }
+
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+    console.log("✅ Firebase Admin initialized successfully");
+  } else {
+    console.log("⚠️ Firebase Admin already initialized");
+  }
 } catch (error) {
   console.error("❌ Firebase Admin not initialized:", error.message);
 }
 
 // ✅ Root route (check if backend is running)
-app.get("/", (req, res) => {
-  res.send("✅ Server running and Firebase connected!");
+app.get("/", async (req, res) => {
+  try {
+    // Test Firebase connectivity by getting users count (optional)
+    await admin.auth().listUsers(1);
+    res.send("✅ Server running and Firebase connected successfully!");
+  } catch (error) {
+    res.send("⚠️ Server running but Firebase not connected: " + error.message);
+  }
 });
 
 // ✅ Example route: Create Firebase user
