@@ -1,35 +1,27 @@
-// index.js (ESM version)
 import express from "express";
-import cors from "cors";
-import bodyParser from "body-parser";
 import admin from "firebase-admin";
+import fs from "fs";
 
 const app = express();
-app.use(cors());
-app.use(bodyParser.json());
 
-// 🔐 Read and decode Firebase key
-const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT;
+// ✅ Path to the secret file Render created
+const serviceAccountPath = "/etc/secrets/FIREBASE_SERVICE_ACCOUNT";
 
-if (!serviceAccountBase64) {
-  console.error("❌ FIREBASE_SERVICE_ACCOUNT is not set in environment variables");
-  process.exit(1);
-}
-
-const serviceAccount = JSON.parse(
-  Buffer.from(serviceAccountBase64, "base64").toString("utf8")
-);
+// ✅ Read and parse the secret file as JSON
+const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, "utf8"));
 
 // ✅ Initialize Firebase Admin
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-const db = admin.firestore();
+console.log("✅ Firebase Admin initialized successfully!");
 
+// --- Basic server test route ---
 app.get("/", (req, res) => {
-  res.json({ message: "✅ Backend connected to Firebase successfully" });
+  res.send("Server running successfully 🚀");
 });
 
+// --- Start server ---
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
