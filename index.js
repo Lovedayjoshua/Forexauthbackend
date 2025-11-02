@@ -4,24 +4,24 @@ import fs from "fs";
 
 const app = express();
 
-// ✅ Path to the secret file Render created
-const serviceAccountPath = "/etc/secrets/FIREBASE_SERVICE_ACCOUNT";
+// ✅ Path to your Render Secret File
+const serviceAccountPath = "/etc/secrets/FIREBASE_CREDENTIALS";
 
-// ✅ Read and parse the secret file as JSON
+// ✅ Load and parse the service account JSON
 const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, "utf8"));
 
-// ✅ Initialize Firebase Admin
+// ✅ Initialize Firebase Admin SDK
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
 console.log("✅ Firebase Admin initialized successfully!");
 
-// --- Basic server test route ---
+// --- Example route for testing ---
 app.get("/", (req, res) => {
   res.send("Server running successfully 🚀");
 });
 
-// --- Start server ---
+// --- Start the server ---
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
